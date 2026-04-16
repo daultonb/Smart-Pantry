@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Smart Pantry{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              pantry: {
+                light: '#dcfce7', // green-100
+                DEFAULT: '#16a34a', // green-600
+                dark: '#14532d', // green-900
+              },
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-gray-100 min-h-screen flex flex-col">
+    <nav class="bg-pantry text-white p-4 shadow-md">
+      <div class="container mx-auto flex justify-between items-center">
+        <a href="{% url 'pantry_dashboard' %}" class="text-2xl font-bold">Smart Pantry</a>
+        {% block nav_extra %}{% endblock %}
+      </div>
+    </nav>
+
+    <main class="container mx-auto p-6 flex-grow">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 p-4 text-center text-gray-500 text-sm">
+      &copy; {% now "Y" %} Smart Pantry Inventory System
+    </footer>
+  </body>
+</html>

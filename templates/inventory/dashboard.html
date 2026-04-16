@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Pantry - Dashboard{% endblock %}
+
+{% block nav_extra %}
+  <div class='flex space-x-3'>
+    <a href='{% url 'shopping_list' %}' class='bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition'>🛒 Shopping List</a>
+    <a href='{% url 'add_item' %}' class='bg-white text-pantry px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition'>+ Add Item</a>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <h2 class='text-3xl font-semibold mb-6 text-gray-800'>My Inventory</h2>
+{% if items %}
+  <div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+  {% for item in items %}
+    <div class='bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition'>
+      <div class='flex justify-between items-start mb-4'>
+      <div>
+          <h3 class='text-xl font-bold text-gray-900'>{{ item.name }}</h3>
+          <span class='text-sm text-gray-500 bg-gray-200 px-2 py-1 rounded'>{{ item.category }}</span>
+        </div>
+        <div class='text-right'>
+          <p class='text-lg font-semibold'>{{ item.remaining_portions }} / {{ item.total_portions }}</p>
+          <p class='text-xs text-gray-400'>portions</p>
+        </div>
+      </div>
+      <div class='mb-4'>
+        <div class='w-full bg-gray-200 rounded-full h-2.5'>
+          <div class='{% if item.remaining_portions <= item.low_stock_threshold %}bg-red-500{% else %}bg-pantry{% endif %} h-2.5 rounded-full' style='width: {% widthratio item.remaining_portions item.total_portions 100 %}%'></div>
+        </div>
+      </div>
+      <div class='flex justify-between items-center mt-6'>
+        <div class='text-sm text-gray-600'>
+          Exp: <span class='{% if item.is_expired %}text-red-600 font-bold{% elif item.is_near_expiry %}font-bold{% endif %}'>{{ item.expiry_date }}</span> | ${{ item.price }}
+        </div>
+        <div class='flex space-x-3 items-center'>
+          {% if item.remaining_portions > 0 %}
+            <a href='{% url 'consume_item' item.pk %}' class='bg-pantry-light text-pantry px-3 py-1 rounded-md text-sm font-bold hover:bg-pantry hover:text-white transition'>Consume</a>
+          {% else %}
+            <span class='bg-gray-100 text-gray-400 px-3 py-1 rounded-md text-sm font-bold cursor-not-allowed'>Out of Stock</span>
+          {% endif %}
+          <div class='flex space-x-2 border-l pl-3'>
+            <a href='{% url 'edit_item' item.pk %}' class='text-blue-600 hover:text-blue-800 text-sm font-medium'>Edit</a>
+            <a href='{% url 'delete_item' item.pk %}' class='text-red-600 hover:text-red-800 text-sm font-medium'>Delete</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class='text-center py-20'>
+    <p class='text-gray-500 text-xl'>Your pantry is empty. Time to go shopping!</p>
+    <a href='{% url 'add_item' %}' class='mt-4 inline-block text-pantry font-semibold hover:underline'>Add your first item &rarr;</a>
+  </div>
+  {% endif %}
+{% endblock %}

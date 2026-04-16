@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Smart Pantry - Delete Item{% endblock %}
+
+{% block content %}
+<div class='flex justify-center'>
+  <div class='bg-white p-8 rounded-xl shadow-md w-full max-w-md text-center'>
+    <div class='text-red-500 mb-4'>
+      <svg class='w-16 h-16 mx-auto' fill='none' stroke='currentColor' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'>
+        <path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 15c-.77 1.333.192 3 1.732 3z'></path>
+      </svg>
+    </div>
+    <h2 class='text-2xl font-bold mb-4 text-gray-800'>Delete Item?</h2>
+    <p class='text-gray-600 mb-8'>
+      Are you sure you want to remove <span class='font-bold text-gray-900'>{{ item.name }}</span> from your pantry? This action cannot be undone.
+    </p>
+
+    <form method='POST' class='flex justify-center space-x-4'>
+      {% csrf_token %}
+      <button type='submit' class='bg-red-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-red-700 transition'>
+        Yes, Delete
+      </button>
+      <a href='{% url "pantry_dashboard" %}' class='bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition text-center'>
+        Cancel
+      </a>
+    </form>
+  </div>
+</div>
+{% endblock %}
+

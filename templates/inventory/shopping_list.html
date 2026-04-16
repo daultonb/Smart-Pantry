@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Pantry - Shopping List{% endblock %}
+
+{% block content %}
+<div class='max-w-2xl mx-auto'>
+  <div class='flex justify-between items-center mb-6'>
+    <h2 class='text-3xl font-bold text-gray-800'>Shopping List</h2>
+    <span class='bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-bold'>{{ items|length }} Items Needed</span>
+  </div>
+
+  {% if items %}
+  <div class='bg-white rounded-xl shadow-md overflow-hidden border border-gray-200'>
+    <ul class='divide-y divide-gray-200'>
+      {% for item in items %}
+      <li class='p-4 flex justify-between items-center hover:bg-gray-50 transition'>
+        <div class='flex items-center space-x-4'>
+          <div class='w-5 h-5 border-2 border-gray-300 rounded-sm'></div>
+          <div>
+            <p class='text-lg font-semibold text-gray-900'>{{ item.name }}</p>
+            <p class='text-sm text-gray-500'>Category: {{ item.category }} | Current: {{ item.remaining_portions }} portions</p>
+          </div>
+        </div>
+        <a href='{% url "restock_item" item.pk %}' class='bg-pantry text-white px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition'>
+          Restock
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class='text-center py-20 bg-white rounded-xl shadow-sm border border-dashed border-gray-300'>
+    <div class='text-green-500 text-5xl mb-4'>✓</div>
+    <p class='text-gray-600 text-xl'>Your pantry is fully stocked!</p>
+    <p class='text-gray-400'>Nothing needs to be bought at the moment.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
