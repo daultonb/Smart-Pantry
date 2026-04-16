@@ -8,19 +8,46 @@
     <h2 class='text-2xl font-bold mb-2 text-gray-800'>
       Consume {{ item.name }}
     </h2>
-    <p class='text-gray-500 mb-6'>Current stock: <span class='font-semibold text-gray-700'>{{ item.remaining_portions }} portions</span></p>
+    <p class='text-gray-500 mb-6'>Current stock: <span class='font-semibold text-gray-700'>{{ item.quantity }} {{ item.unit }}</span></p>
 
-    <form method='POST' class='space-y-4'>
+    <form method='POST' id='consume-form' class='space-y-4'>
       {% csrf_token %}
-      {% for field in form %}
+      
+      <!-- Amount field -->
       <div>
-        <label class='block text-sm font-medium text-gray-700 mb-1'>{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}
-        <p class='text-red-500 text-xs mt-1'>{{ field.errors.0 }}</p>
+        <label class='block text-sm font-medium text-gray-700 mb-1'>Amount</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}
+        <p class='text-red-500 text-xs mt-1'>{{ form.amount.errors.0 }}</p>
         {% endif %}
       </div>
-      {% endfor %}
+
+      <!-- Product Search field -->
+      <div>
+        <label class='block text-sm font-medium text-gray-700 mb-1'>Lookup Macros (Optional)</label>
+        {{ form.product_name }}
+        <div id='product-suggestions' class='hidden mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto'></div>
+      </div>
+
+      <!-- Nutrition fields -->
+      <div class='grid grid-cols-2 gap-4'>
+        <div>
+          <label class='block text-sm font-medium text-gray-700 mb-1'>Calories</label>
+          {{ form.calories }}
+        </div>
+        <div>
+          <label class='block text-sm font-medium text-gray-700 mb-1'>Protein (g)</label>
+          {{ form.protein }}
+        </div>
+        <div>
+          <label class='block text-sm font-medium text-gray-700 mb-1'>Carbs (g)</label>
+          {{ form.carbs }}
+        </div>
+        <div>
+          <label class='block text-sm font-medium text-gray-700 mb-1'>Fat (g)</label>
+          {{ form.fat }}
+        </div>
+      </div>
 
       <div class='pt-4 flex space-x-3'>
         <button type='submit' class='bg-pantry text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition'>
@@ -46,5 +73,138 @@
     border-color: #16a34a;
     box-shadow: 0 0 0 2px rgba(22, 163, 10, 0.2);
   }
+  .suggestion-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  .suggestion-item:hover {
+    background-color: #f9fafb;
+  }
+  .suggestion-item .product-name {
+    font-weight: 600;
+    color: #1f2937;
+  }
+  .suggestion-item .product-brands {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  .suggestion-item .nutrition-info {
+    font-size: 0.75rem;
+    color: #16a34a;
+    margin-top: 0.25rem;
+  }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const productSearchInput = document.querySelector('.product-search-input');
+  const suggestionsContainer = document.getElementById('product-suggestions');
+  const caloriesInput = document.querySelector('input[name="calories"]');
+  const proteinInput = document.querySelector('input[name="protein"]');
+  const carbsInput = document.querySelector('input[name="carbs"]');
+  const fatInput = document.querySelector('input[name="fat"]');
+  
+  let searchTimeout = null;
+  let selectedProduct = null;
+
+  // Debounced search function
+  productSearchInput.addEventListener('input', function() {
+    const query = this.value.trim();
+    
+    // Clear previous suggestions
+    suggestionsContainer.innerHTML = '';
+    suggestionsContainer.classList.add('hidden');
+    selectedProduct = null;
+    
+    // Clear nutrition fields if search changed
+    if (query !== selectedProduct?.name) {
+      caloriesInput.value = '';
+      proteinInput.value = '';
+      carbsInput.value = '';
+      fatInput.value = '';
+    }
+    
+    if (query.length < 2) {
+      return;
+    }
+    
+    // Debounce the search
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      searchProducts(query);
+    }, 300);
+  });
+
+  // Search for products
+  function searchProducts(query) {
+    fetch(`/inventory/nutrition/search/?q=${encodeURIComponent(query)}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.products && data.products.length > 0) {
+          displaySuggestions(data.products);
+        } else {
+          suggestionsContainer.classList.add('hidden');
+        }
+      })
+      .catch(error => {
+        console.error('Search error:', error);
+        suggestionsContainer.classList.add('hidden');
+      });
+  }
+
+  // Display product suggestions
+  function displaySuggestions(products) {
+    suggestionsContainer.innerHTML = '';
+    
+    products.forEach(product => {
+      const suggestion = document.createElement('div');
+      suggestion.className = 'suggestion-item';
+      suggestion.innerHTML = `
+        <div class="product-name">${escapeHtml(product.name)}</div>
+        <div class="product-brands">${escapeHtml(product.brands || '')}</div>
+        <div class="nutrition-info">
+          ${product.calories} cal | ${product.protein}g protein | ${product.carbs}g carbs | ${product.fat}g fat
+        </div>
+      `;
+      
+      suggestion.addEventListener('click', function() {
+        selectProduct(product);
+      });
+      
+      suggestionsContainer.appendChild(suggestion);
+    });
+    
+    suggestionsContainer.classList.remove('hidden');
+  }
+
+  // Select a product and fill nutrition fields
+  function selectProduct(product) {
+    selectedProduct = product;
+    productSearchInput.value = product.name;
+    caloriesInput.value = product.calories;
+    proteinInput.value = product.protein;
+    carbsInput.value = product.carbs;
+    fatInput.value = product.fat;
+    suggestionsContainer.classList.add('hidden');
+  }
+
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!productSearchInput.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+      suggestionsContainer.classList.add('hidden');
+    }
+  });
+
+  // Escape HTML to prevent XSS
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+});
+</script>
 {% endblock %}

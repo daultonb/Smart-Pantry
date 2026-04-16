@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Recipe Dashboard - Smart Pantry{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">🍳 Recipe Dashboard</h1>
+    <a href="{% url 'add_recipe' %}" class="bg-pantry text-white px-4 py-2 rounded-lg hover:bg-pantry-dark transition">
+      + Add Recipe
+    </a>
+  </div>
+
+  {% if recipes %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for recipe in recipes %}
+    <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <div class="flex justify-between items-start mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">{{ recipe.name }}</h2>
+        <span class="text-sm text-gray-500">{{ recipe.get_ingredients_count }} ingredients</span>
+      </div>
+      
+      {% if recipe.description %}
+      <p class="text-gray-600 mb-4 text-sm">{{ recipe.description }}</p>
+      {% endif %}
+      
+      <div class="mb-4">
+        <h3 class="text-sm font-medium text-gray-700 mb-2">Ingredients:</h3>
+        <ul class="text-sm text-gray-600 space-y-1">
+          {% for ingredient in recipe.ingredients.all %}
+          <li class="flex justify-between">
+            <span>{{ ingredient.item.name }}</span>
+            <span>{{ ingredient.required_amount }} {{ ingredient.item.unit }}</span>
+          </li>
+          {% empty %}
+          <li class="text-gray-400 italic">No ingredients added</li>
+          {% endfor %}
+        </ul>
+      </div>
+      
+      <div class="flex space-x-2">
+        <a href="{% url 'cook_recipe' recipe.pk %}" class="flex-1 bg-blue-500 text-white text-center px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+          Cook
+        </a>
+        <a href="{% url 'edit_recipe' recipe.pk %}" class="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300 transition">
+          Edit
+        </a>
+        <a href="{% url 'delete_recipe' recipe.pk %}" class="bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition">
+          Delete
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="bg-white rounded-lg shadow-md p-8 text-center">
+    <p class="text-gray-600 text-lg mb-4">No recipes yet!</p>
+    <a href="{% url 'add_recipe' %}" class="bg-pantry text-white px-6 py-3 rounded-lg hover:bg-pantry-dark transition">
+      Create Your First Recipe
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

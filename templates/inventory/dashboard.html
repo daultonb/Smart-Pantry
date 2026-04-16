@@ -2,13 +2,6 @@
 
 {% block title %}Smart Pantry - Dashboard{% endblock %}
 
-{% block nav_extra %}
-  <div class='flex space-x-3'>
-    <a href='{% url 'shopping_list' %}' class='bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition'>🛒 Shopping List</a>
-    <a href='{% url 'add_item' %}' class='bg-white text-pantry px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition'>+ Add Item</a>
-  </div>
-{% endblock %}
-
 {% block content %}
   <h2 class='text-3xl font-semibold mb-6 text-gray-800'>My Inventory</h2>
 {% if items %}
@@ -21,13 +14,13 @@
           <span class='text-sm text-gray-500 bg-gray-200 px-2 py-1 rounded'>{{ item.category }}</span>
         </div>
         <div class='text-right'>
-          <p class='text-lg font-semibold'>{{ item.remaining_portions }} / {{ item.total_portions }}</p>
-          <p class='text-xs text-gray-400'>portions</p>
+          <p class='text-lg font-semibold'>{{ item.quantity }} / {{ item.total_quantity }}</p>
+          <p class='text-xs text-gray-400'>{{ item.unit }}</p>
         </div>
       </div>
       <div class='mb-4'>
         <div class='w-full bg-gray-200 rounded-full h-2.5'>
-          <div class='{% if item.remaining_portions <= item.low_stock_threshold %}bg-red-500{% else %}bg-pantry{% endif %} h-2.5 rounded-full' style='width: {% widthratio item.remaining_portions item.total_portions 100 %}%'></div>
+          <div class='{% if item.quantity <= item.low_stock_threshold %}bg-red-500{% else %}bg-pantry{% endif %} h-2.5 rounded-full' style='width: {{ item.get_quantity_percentage }}%'></div>
         </div>
       </div>
       <div class='flex justify-between items-center mt-6'>
@@ -35,7 +28,7 @@
           Exp: <span class='{% if item.is_expired %}text-red-600 font-bold{% elif item.is_near_expiry %}font-bold{% endif %}'>{{ item.expiry_date }}</span> | ${{ item.price }}
         </div>
         <div class='flex space-x-3 items-center'>
-          {% if item.remaining_portions > 0 %}
+          {% if item.quantity > 0 %}
             <a href='{% url 'consume_item' item.pk %}' class='bg-pantry-light text-pantry px-3 py-1 rounded-md text-sm font-bold hover:bg-pantry hover:text-white transition'>Consume</a>
           {% else %}
             <span class='bg-gray-100 text-gray-400 px-3 py-1 rounded-md text-sm font-bold cursor-not-allowed'>Out of Stock</span>

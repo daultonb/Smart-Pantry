@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Pantry - Financial Analytics{% endblock %}
+
+{% block content %}
+  <h2 class='text-3xl font-semibold mb-6 text-gray-800'>Financial Analytics</h2>
+
+  <!-- Summary Cards -->
+  <div class='grid grid-cols-1 md:grid-cols-3 gap-6 mb-8'>
+    <div class='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
+      <h3 class='text-sm font-medium text-gray-500 mb-2'>Total Pantry Value</h3>
+      <p class='text-3xl font-bold text-pantry'>${{ total_value|floatformat:2 }}</p>
+    </div>
+    <div class='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
+      <h3 class='text-sm font-medium text-gray-500 mb-2'>Total Items</h3>
+      <p class='text-3xl font-bold text-gray-700'>{{ items_count }}</p>
+    </div>
+    <div class='bg-white p-6 rounded-xl shadow-sm border border-gray-200'>
+      <h3 class='text-sm font-medium text-gray-500 mb-2'>Categories</h3>
+      <p class='text-3xl font-bold text-gray-700'>{{ categories_count }}</p>
+    </div>
+  </div>
+
+  <!-- Time Range Selector -->
+  <div class='mb-6'>
+    <form method='get' class='flex items-center space-x-4'>
+      <label class='text-sm font-medium text-gray-700'>Time Range:</label>
+      {% for days in date_range_options %}
+        <a href='?days={{ days }}' class='px-3 py-1 rounded-md text-sm {% if days_range == days %}bg-pantry text-white{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}'>{{ days }} Days</a>
+      {% endfor %}
+    </form>
+  </div>
+
+  <!-- Chart 1: Pantry Value Over Time -->
+  <div class='bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6'>
+    <h3 class='text-md font-semibold mb-3 text-gray-800'>Pantry Value Over Time ({{ days_range }} Days)</h3>
+    <div class='h-48'>
+      <canvas id='pantryValueChart'></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 2: Spending by Category -->
+  <div class='bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6'>
+    <h3 class='text-md font-semibold mb-3 text-gray-800'>Pantry Value by Category</h3>
+    <div class='h-48'>
+      <canvas id='categoryChart'></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 3: Value by Store -->
+  <div class='bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6'>
+    <h3 class='text-md font-semibold mb-3 text-gray-800'>Pantry Value by Store</h3>
+    <div class='h-48'>
+      <canvas id='storeChart'></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 4: Price History per Item -->
+  <div class='bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6'>
+    <h3 class='text-md font-semibold mb-3 text-gray-800'>Price History by Item</h3>
+    <div class='h-48'>
+      <canvas id='priceHistoryChart'></canvas>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+  <script>
+    // Chart 1: Pantry Value Over Time
+    const pantryValueCtx = document.getElementById('pantryValueChart').getContext('2d');
+    const historicalValues = {{ historical_values|safe }};
+    new Chart(pantryValueCtx, {
+      type: 'line',
+      data: {
+        labels: historicalValues.map(d => d.date),
+        datasets: [{
+          label: 'Pantry Value ($)',
+          data: historicalValues.map(d => d.value),
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return '$' + value.toFixed(2); }
+            }
+          }
+        }
+      }
+    });
+
+    // Chart 2: Spending by Category (Pie Chart)
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryObj = {{ value_by_category|safe }};
+    new Chart(categoryCtx, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(categoryObj),
+        datasets: [{
+          data: Object.values(categoryObj),
+          backgroundColor: [
+            'rgb(255, 99, 132)',
+            'rgb(54, 162, 235)',
+            'rgb(255, 206, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(153, 102, 255)',
+            'rgb(255, 159, 64)',
+            'rgb(199, 199, 199)',
+            'rgb(83, 102, 255)',
+            'rgb(255, 99, 255)',
+            'rgb(99, 255, 132)'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'right' }
+        }
+      }
+    });
+
+    // Chart 3: Value by Store (Bar Chart)
+    const storeCtx = document.getElementById('storeChart').getContext('2d');
+    const storeObj = {{ value_by_store|safe }};
+    new Chart(storeCtx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(storeObj),
+        datasets: [{
+          label: 'Value ($)',
+          data: Object.values(storeObj),
+          backgroundColor: 'rgba(59, 130, 246, 0.6)',
+          borderColor: 'rgb(59, 130, 246)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) { return '$' + value.toFixed(2); }
+            }
+          }
+        }
+      }
+    });
+
+    // Chart 4: Price History per Item (Line Chart)
+    const priceHistoryCtx = document.getElementById('priceHistoryChart').getContext('2d');
+    const priceHistoryObj = {{ item_price_history|safe }};
+    
+    // Get all unique items with price history
+    const itemsWithHistory = Object.keys(priceHistoryObj);
+    
+    // Create datasets for each item
+    const datasets = itemsWithHistory.map((item, index) => {
+      const colors = [
+        'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 206, 86)',
+        'rgb(75, 192, 192)', 'rgb(153, 102, 255)', 'rgb(255, 159, 64)',
+        'rgb(199, 199, 199)', 'rgb(83, 102, 255)', 'rgb(255, 99, 255)',
+        'rgb(99, 255, 132)'
+      ];
+      return {
+        label: item,
+        data: priceHistoryObj[item],
+        borderColor: colors[index % colors.length],
+        backgroundColor: colors[index % colors.length],
+        fill: false,
+        tension: 0.1
+      };
+    });
+
+    new Chart(priceHistoryCtx, {
+      type: 'line',
+      data: {
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: false,
+            ticks: {
+              callback: function(value) { return '$' + value.toFixed(2); }
+            }
+          }
+        }
+      }
+    });
+  </script>
+{% endblock %}

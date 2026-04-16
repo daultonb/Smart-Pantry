@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Recipe - Smart Pantry{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">{{ action }} Recipe</h1>
+  
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="space-y-6">
+        <!-- Recipe Basic Info -->
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Recipe Details</h2>
+          
+          <div class="mb-4">
+            <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Recipe Name *
+            </label>
+            {{ form.name }}
+            {% if form.name.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.name.errors }}</p>
+            {% endif %}
+          </div>
+          
+          <div class="mb-4">
+            <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Description
+            </label>
+            {{ form.description }}
+            {% if form.description.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.description.errors }}</p>
+            {% endif %}
+          </div>
+          
+          <div class="mb-4">
+            <label for="{{ form.instructions.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Instructions
+            </label>
+            {{ form.instructions }}
+            {% if form.instructions.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ form.instructions.errors }}</p>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Ingredients Section -->
+        <div>
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">Ingredients</h2>
+          
+          {% if ingredients %}
+          <div class="mb-4 bg-gray-50 p-4 rounded-lg">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Current Ingredients:</h3>
+            <ul class="text-sm text-gray-600 space-y-1">
+              {% for ingredient in ingredients %}
+              <li class="flex justify-between">
+                <span>{{ ingredient.item.name }}</span>
+                <span>{{ ingredient.required_amount }} {{ ingredient.item.unit }}</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+          
+          <p class="text-sm text-gray-600 mb-4">Add ingredients from your pantry:</p>
+          
+          <div id="ingredients-container" class="space-y-4">
+            <!-- Existing ingredients for edit mode -->
+            {% if ingredients %}
+              {% for ingredient in ingredients %}
+              <div class="ingredient-row flex gap-4 items-start">
+                <input type="hidden" name="ingredient_{{ forloop.counter0 }}_item" value="{{ ingredient.item.id }}">
+                <div class="flex-1">
+                  <label class="block text-sm text-gray-600 mb-1">{{ ingredient.item.name }}</label>
+                </div>
+                <div class="w-32">
+                  <input type="number" step="0.01" min="0.01" name="ingredient_{{ forloop.counter0 }}_amount" 
+                         value="{{ ingredient.required_amount }}" 
+                         class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pantry focus:border-pantry">
+                </div>
+                <div class="w-16">
+                  <span class="text-sm text-gray-600">{{ ingredient.item.unit }}</span>
+                </div>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+          
+          <button type="button" onclick="addIngredientRow()" 
+                  class="mt-4 text-pantry hover:text-pantry-dark font-medium">
+            + Add Another Ingredient
+          </button>
+          
+          <input type="hidden" name="ingredient_count" id="ingredient_count" value="{{ ingredients|default:0 }}">
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="flex space-x-4 pt-4 border-t">
+          <button type="submit" class="flex-1 bg-pantry text-white px-6 py-3 rounded-lg hover:bg-pantry-dark transition font-medium">
+            {{ action }} Recipe
+          </button>
+          <a href="{% url 'recipe_dashboard' %}" class="flex-1 bg-gray-200 text-gray-700 text-center px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium">
+            Cancel
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let ingredientIndex = {{ ingredients|default:0 }};
+
+function addIngredientRow() {
+  const container = document.getElementById('ingredients-container');
+  const countInput = document.getElementById('ingredient_count');
+  
+  const row = document.createElement('div');
+  row.className = 'ingredient-row flex gap-4 items-start animate-fade-in';
+  row.innerHTML = `
+    <div class="flex-1">
+      <label class="block text-sm text-gray-600 mb-1">Select Item</label>
+      <select name="ingredient_${ingredientIndex}_item" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pantry focus:border-pantry" onchange="updateUnitDisplay(${ingredientIndex})">
+        <option value="">-- Choose an item --</option>
+        {% for item in available_items %}
+        <option value="{{ item.id }}" data-unit="{{ item.unit }}">{{ item.name }} ({{ item.quantity }} {{ item.unit }})</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="w-32">
+      <label class="block text-sm text-gray-600 mb-1">Amount</label>
+      <input type="number" step="0.01" min="0.01" name="ingredient_${ingredientIndex}_amount" 
+             placeholder="0.00" 
+             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-pantry focus:border-pantry">
+    </div>
+    <div class="w-16">
+      <label class="block text-sm text-gray-600 mb-1">Unit</label>
+      <span id="unit-display-${ingredientIndex}" class="text-sm text-gray-600">-</span>
+    </div>
+    <button type="button" onclick="removeIngredientRow(this)" class="text-red-500 hover:text-red-700 mt-5">
+      ✕
+    </button>
+  `;
+  
+  container.appendChild(row);
+  ingredientIndex++;
+  countInput.value = ingredientIndex;
+}
+
+function updateUnitDisplay(index) {
+  const select = document.querySelector(`select[name="ingredient_${index}_item"]`);
+  const unitDisplay = document.getElementById(`unit-display-${index}`);
+  const selectedOption = select.options[select.selectedIndex];
+  unitDisplay.textContent = selectedOption.getAttribute('data-unit') || '-';
+}
+
+function removeIngredientRow(button) {
+  const row = button.closest('.ingredient-row');
+  row.remove();
+  
+  // Re-index remaining rows
+  const container = document.getElementById('ingredients-container');
+  const rows = container.querySelectorAll('.ingredient-row');
+  const countInput = document.getElementById('ingredient_count');
+  
+  rows.forEach((row, idx) => {
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach(input => {
+      const name = input.name;
+      if (name && name.includes('ingredient_')) {
+        const parts = name.split('_');
+        parts[1] = idx;
+        input.name = parts.join('_');
+      }
+    });
+    
+    // Update unit display IDs
+    const unitDisplay = row.querySelector('[id^="unit-display-"]');
+    if (unitDisplay) {
+      unitDisplay.id = `unit-display-${idx}`;
+    }
+    
+    // Update onchange handlers
+    const select = row.querySelector('select');
+    if (select) {
+      select.onchange = `updateUnitDisplay(${idx})`;
+    }
+  });
+  
+  countInput.value = rows.length;
+}
+</script>
+
+<style>
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+</style>
+{% endblock %}

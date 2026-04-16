@@ -24,8 +24,15 @@
   <body class="bg-gray-100 min-h-screen flex flex-col">
     <nav class="bg-pantry text-white p-4 shadow-md">
       <div class="container mx-auto flex justify-between items-center">
-        <a href="{% url 'pantry_dashboard' %}" class="text-2xl font-bold">Smart Pantry</a>
-        {% block nav_extra %}{% endblock %}
+        <a href="{% url 'home' %}" class="text-2xl font-bold">Smart Pantry</a>
+        <div class="flex space-x-4">
+          <a href="{% url 'home' %}" class="hover:bg-white/20 px-3 py-2 rounded-lg transition">🏠 Home</a>
+          <a href="{% url 'pantry_dashboard' %}" class="hover:bg-white/20 px-3 py-2 rounded-lg transition">📦 Inventory</a>
+          <a href="{% url 'recipe_dashboard' %}" class="hover:bg-white/20 px-3 py-2 rounded-lg transition">🍳 Recipes</a>
+          <a href="{% url 'analytics' %}" class="hover:bg-white/20 px-3 py-2 rounded-lg transition">📊 Analytics</a>
+          <a href="{% url 'shopping_list' %}" class="hover:bg-white/20 px-3 py-2 rounded-lg transition">🛒 Shopping</a>
+          {% block nav_extra %}{% endblock %}
+        </div>
       </div>
     </nav>
 
@@ -36,5 +43,7 @@
     <footer class="bg-white border-t border-gray-200 p-4 text-center text-gray-500 text-sm">
       &copy; {% now "Y" %} Smart Pantry Inventory System
     </footer>
+
+    {% block extra_js %}{% endblock %}
   </body>
 </html>

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}Cook {{ recipe.name }} - Smart Pantry{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-800 mb-6">🍳 Cook Recipe</h1>
+  
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-2">{{ recipe.name }}</h2>
+    
+    {% if recipe.description %}
+    <p class="text-gray-600 mb-4">{{ recipe.description }}</p>
+    {% endif %}
+    
+    {% if recipe.instructions %}
+    <div class="mb-4">
+      <h3 class="text-lg font-medium text-gray-700 mb-2">Instructions:</h3>
+      <div class="bg-gray-50 p-4 rounded-lg text-gray-600 whitespace-pre-wrap">{{ recipe.instructions }}</div>
+    </div>
+    {% endif %}
+    
+    <div class="mb-4">
+      <h3 class="text-lg font-medium text-gray-700 mb-2">Ingredients Required:</h3>
+      <ul class="space-y-2">
+        {% for ingredient in recipe.ingredients.all %}
+        <li class="flex justify-between items-center p-2 rounded-lg {% if not can_cook %}{% if ingredient.item.name in missing_ingredient_names %}bg-red-50{% else %}{% endif %}{% endif %}">
+          <span class="font-medium">{{ ingredient.item.name }}</span>
+          <span class="text-gray-600">
+            {{ ingredient.required_amount }} {{ ingredient.item.unit }}
+            {% if not can_cook %}
+            {% for missing in missing_ingredients %}
+            {% if missing.item == ingredient.item %}
+            <span class="text-red-500 text-sm">(Only {{ missing.available }} {{ ingredient.item.unit }} available)</span>
+            {% endif %}
+            {% endfor %}
+            {% endif %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  
+  {% if error_message %}
+  <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
+    {{ error_message }}
+  </div>
+  {% endif %}
+  
+  {% if success_message %}
+  <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
+    {{ success_message }}
+  </div>
+  {% endif %}
+  
+  {% if can_cook %}
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex space-x-4">
+      <button type="submit" class="flex-1 bg-pantry text-white px-6 py-3 rounded-lg hover:bg-pantry-dark transition font-medium">
+        Cook Recipe (Consume Ingredients)
+      </button>
+      <a href="{% url 'recipe_dashboard' %}" class="flex-1 bg-gray-200 text-gray-700 text-center px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium">
+        Cancel
+      </a>
+    </div>
+  </form>
+  {% else %}
+  <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg mb-6">
+    <p class="font-medium">Cannot cook this recipe - missing ingredients:</p>
+    <ul class="mt-2 ml-4">
+      {% for missing in missing_ingredients %}
+      <li>{{ missing.item.name }}: Need {{ missing.required }} {{ missing.item.unit }}, have {{ missing.available }} {{ missing.item.unit }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <a href="{% url 'pantry_dashboard' %}" class="bg-pantry text-white px-6 py-3 rounded-lg hover:bg-pantry-dark transition font-medium">
+    Go to Pantry
+  </a>
+  {% endif %}
+</div>
+{% endblock %}
