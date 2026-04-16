@@ -64,21 +64,21 @@
 
 ## 🖼️ Screenshots
 
+### Home Page
+![Home](readme_screenshots/home.png)
+*Welcome page with quick access to all features*
+
 ### Dashboard
-![Dashboard](SmartPantryV1/dashboard.png)
+![Dashboard](readme_screenshots/dashboard.png)
 *Main inventory dashboard with expiry tracking and quick actions*
 
 ### Recipe Management
-![Recipes](SmartPantryV2/recipe_dashboard.png)
+![Recipes](readme_screenshots/recipes.png)
 *Create and manage custom recipes with ingredient tracking*
 
 ### Analytics
-![Analytics](SmartPantryV2/analytics.png)
+![Analytics](readme_screenshots/analytics.png)
 *Financial insights with interactive charts*
-
-### Nutrition Search
-![Nutrition](SmartPantryV2/nutrition_search.png)
-*Open Food Facts integration for nutrition data*
 
 ---
 
@@ -415,13 +415,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Bootstrap](https://getbootstrap.com/) for the UI framework
 - [Chart.js](https://www.chartjs.org/) for data visualization
 
----
-
-## 📞 Support
-
-For issues, questions, or suggestions:
-- Open an issue on GitHub
-- Email: support@smartpantry.example.com
 
 ---
 
